@@ -203,29 +203,34 @@ L2 = P_d / (τ_d,m/b × d_h × π) = {r.Pd_kN:.1f} / ({tauD_mb:.3f} × {dh_mm:.0
     # ⑥ λ berguttrekk
     with st.expander("⑥ λ – bergstabilitet mot uttrekk", expanded=True):
         sinA = math.sin(float(alpha)*PI/180)
-        tanP_eff = math.tan(r.psi_eff_deg * PI / 180)
+        # Beregn ψ_eff lokalt (trygt selv om beregning.py er eldre versjon)
+        psi_eff_deg = float(psi) * sinA if float(alpha) < 90 else float(psi)
+        psi_redusert = float(alpha) < 90
+        tanP_eff = math.tan(psi_eff_deg * PI / 180)
         num  = gammaM_berg * r.Pp_kN * 1000
         den  = tauBerg * 1000 * PI * tanP_eff * sinA
 
         # Advarsel ved lav ankervinkel
-        if r.alpha_advarsel:
-            st.error(f"⚠️ {r.alpha_advarsel}")
+        if float(alpha) < 30:
+            st.error(f"⚠️ α = {float(alpha):.0f}° < 30°: Beregningsmetoden er uegnet iht. V220 tabell 11.6.4.5-3.")
+        elif float(alpha) <= 40:
+            st.warning(f"⚠️ α = {float(alpha):.0f}° (30°–40°): Beregnet λ er usikker iht. V220 tabell 11.6.4.5-3.")
 
         # Vis ψ-reduksjon hvis aktuelt
-        if r.psi_redusert:
+        if psi_redusert:
             st.info(
                 f"V220 tab. 11.6.4.5-3: For α = {float(alpha):.0f}° < 90° reduseres bruddvinkelen: "
-                f"ψ_eff = ψ × sin(α) = {psi:.0f}° × sin({float(alpha):.0f}°) = **{r.psi_eff_deg:.2f}°**  "
+                f"ψ_eff = ψ × sin(α) = {psi:.0f}° × sin({float(alpha):.0f}°) = **{psi_eff_deg:.2f}°**  "
                 f"(formel 11.6.4.5-6)"
             )
 
-        psi_linje = (f"ψ_eff = ψ × sin(α) = {psi:.0f}° × {sinA:.4f} = {r.psi_eff_deg:.2f}°  "
-                     f"[V220 tab. 11.6.4.5-3]" if r.psi_redusert else f"ψ = {psi:.0f}°")
-        ref = "V220 11.6.4.5-6" if r.psi_redusert else "V220 11.6.4.5-5"
+        psi_linje = (f"ψ_eff = ψ × sin(α) = {psi:.0f}° × {sinA:.4f} = {psi_eff_deg:.2f}°  "
+                     f"[V220 tab. 11.6.4.5-3]" if psi_redusert else f"ψ = {psi:.0f}°")
+        ref = "V220 11.6.4.5-6" if psi_redusert else "V220 11.6.4.5-5"
         st.markdown(f"""<div class="formula-box">
 {psi_linje}
 λ = √( γ_M × P_p / (τ_k × π × tan(ψ_eff) × sin(α)) )  [{ref}]
-  = √( {gammaM_berg:.1f} × {r.Pp_kN*1000:.0f} N / ({tauBerg*1000:.0f} Pa × π × tan({r.psi_eff_deg:.2f}°) × sin({float(alpha):.0f}°)) )
+  = √( {gammaM_berg:.1f} × {r.Pp_kN*1000:.0f} N / ({tauBerg*1000:.0f} Pa × π × tan({psi_eff_deg:.2f}°) × sin({float(alpha):.0f}°)) )
   = √( {num:.0f} / {den:.2f} )
   = {r.lam_m:.3f} m
 </div>""", unsafe_allow_html=True)

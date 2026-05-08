@@ -102,6 +102,9 @@ class Resultater:
     # Berguttrekk
     lam_m: float = 0.0
     lDim_m: float = 0.0
+    psi_eff_deg: float = 0.0      # Effektiv bruddvinkel etter sin(α)-reduksjon
+    psi_redusert: bool = False    # True hvis ψ er redusert pga. vinkel < 90°
+    alpha_advarsel: str = ""      # Advarsel ved α < 40°
 
     # Status
     lamDim: bool = False         # True hvis berguttrekk er dimensjonerende
@@ -226,7 +229,32 @@ def beregn(inn: Inndata) -> Resultater:
     r.L2_styrende = r.L2_m > r.L1_m
 
     # ── λ – bergstabilitet mot uttrekk ────────────────────────────────────────
-    denom = tauBerg * PI * tanP * sinA
+    # V220 kap. 11.6.4.5: For vinklet stag (α < 90°) skal ψ reduseres
+    # iht. tabell 11.6.4.5-3: ψmaks ≤ ψ* · sin(α), der ψ* er tabellets maks-verdi.
+    # Formelen for vinklet stag er formel 11.6.4.5-6:
+    #   λα = √( γM·Pp / (τk·π·tan(ψ_eff)·sin(α)) )   for 90° ≥ α ≥ 30°
+    # For loddrett stag (α=90°): sin(α)=1, ψ_eff=ψ → formel 11.6.4.5-5.
+
+    # Advarsel for lave ankervinkler
+    if inn.alpha_deg < 30:
+        r.alpha_advarsel = (f"α = {inn.alpha_deg:.0f}° < 30°: Beregningsmetoden er uegnet "
+                            f"iht. V220 tabell 11.6.4.5-3. Resultatet skal ikke benyttes.")
+    elif inn.alpha_deg <= 40:
+        r.alpha_advarsel = (f"α = {inn.alpha_deg:.0f}° (30°–40°): Beregnet λ er usikker "
+                            f"iht. V220 tabell 11.6.4.5-3.")
+
+    # Effektiv bruddvinkel: for α < 90° skal ψ begrenses til ψ* · sin(α)
+    # der ψ* er brukerens innlagte ψ (som allerede er valgt ≤ tabell-maks for α=90°)
+    if inn.alpha_deg < 90:
+        psi_eff_deg = inn.psi_deg * sinA   # ψ_eff = ψ · sin(α)
+        r.psi_redusert = True
+    else:
+        psi_eff_deg = inn.psi_deg
+        r.psi_redusert = False
+    r.psi_eff_deg = psi_eff_deg
+
+    tanP_eff = math.tan(psi_eff_deg * PI / 180)
+    denom = tauBerg * PI * tanP_eff * sinA
     r.lam_m = math.sqrt(max(0, inn.gammaM_berg * r.Pp_kN * 1000 / denom))
     r.lDim_m = max(r.Ld_m, r.lam_m)
     r.lamDim = r.lam_m >= r.Ld_m
