@@ -422,27 +422,51 @@ def _kap5_inngysingslengde(story, inn, res):
 
 def _kap6_berguttrekk(story, inn, res):
     h3(story, f"6. Kontroll &#9318; – Bergstabilitet mot uttrekk ({lam_s})")
-    story.append(P(
-        f'Kjeglemodell iht. V220 formel 11.6.4.5-5. '
-        f'{tkb} = {inn.tauK_berg_kPa:.0f} kPa er bergmassens skj&#230;rmotstand langs '
-        f'bruddkjeglens overflate (V220 tab. 11.6.4.5-2) – ikke heftfasthet m&#248;rtel/berg. '
-        f'sin({alp_s}) inng&#229;r for vinklet anker.', NT))
+
+    # Advarsel ved lav ankervinkel
+    if res.alpha_advarsel:
+        story.append(P(
+            f'&#9888; <b>ADVARSEL:</b> {res.alpha_advarsel}',
+            _sty(fontSize=8.5, fontName='Helvetica-Bold', textColor=RED,
+                 backColor=FAIL, borderPad=6, leftIndent=4, spaceAfter=6)))
+
+    if res.psi_redusert:
+        story.append(P(
+            f'V220 tabell 11.6.4.5-3: For vinklet stag ({alp_s} = {inn.alpha_deg:.0f}° &lt; 90°) '
+            f'reduseres bruddvinkelen iht. krav om {psi_s}{sub("maks")} {leq} {psi_s}* {times} sin({alp_s}): '
+            f'{psi_s}{sub("eff")} = {inn.psi_deg:.0f}° {times} sin({inn.alpha_deg:.0f}°) = <b>{res.psi_eff_deg:.2f}°</b>. '
+            f'Formelen som benyttes er V220 11.6.4.5-6.', NT))
+    else:
+        story.append(P(
+            f'Kjeglemodell iht. V220 formel 11.6.4.5-5 (loddrett stag, {alp_s} = 90°). '
+            f'{tkb} = {inn.tauK_berg_kPa:.0f} kPa er bergmassens skj&#230;rmotstand langs '
+            f'bruddkjeglens overflate (V220 tab. 11.6.4.5-2) – ikke heftfasthet m&#248;rtel/berg.', NT))
+
     sinA = math.sin(inn.alpha_deg * PI / 180)
-    tanP = math.tan(inn.psi_deg  * PI / 180)
+    tanP_eff = math.tan(res.psi_eff_deg * PI / 180)
     num  = inn.gammaM_berg * res.Pp_kN * 1000
-    den  = inn.tauK_berg_kPa * 1000 * PI * tanP * sinA
-    story.append(mono([
+    den  = inn.tauK_berg_kPa * 1000 * PI * tanP_eff * sinA
+    ref  = "V220 11.6.4.5-6" if res.psi_redusert else "V220 11.6.4.5-5"
+
+    lines = []
+    if res.psi_redusert:
+        lines.append(
+            f'{psi_s}{sub("eff")} = {psi_s} {times} sin({alp_s}) = {inn.psi_deg:.0f}° {times} {sinA:.4f}'
+            f' = <b>{res.psi_eff_deg:.2f}°</b>  [V220 tab. 11.6.4.5-3]')
+        lines.append('')
+    lines += [
         f'{lam_s} = {sqrt}( {gamM} {times} {Pp_s} / ({tkb} {times} {pi_s}'
-        f' {times} tan({psi_s}) {times} sin({alp_s})) )',
+        f' {times} tan({psi_s}{sub("eff")}) {times} sin({alp_s})) )  [{ref}]',
         '',
         f'    = {sqrt}( {inn.gammaM_berg:.1f} {times} {res.Pp_kN*1000:.0f} N',
         f'       / ({inn.tauK_berg_kPa*1000:.0f} Pa {times} {pi_s}'
-        f' {times} tan({inn.psi_deg:.0f}°) {times} sin({inn.alpha_deg:.0f}°)) )',
+        f' {times} tan({res.psi_eff_deg:.2f}°) {times} sin({inn.alpha_deg:.0f}°)) )',
         '',
         f'    = {sqrt}( {num:.0f} / {den:.2f} )',
         '',
         f'    = <b>{res.lam_m:.3f} m</b>',
-    ]))
+    ]
+    story.append(mono(lines))
 
 
 def _kap7_oppsummering(story, inn, res):
