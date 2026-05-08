@@ -4,6 +4,7 @@ Kjør med: streamlit run app.py
 """
 import streamlit as st
 import math
+import datetime
 from beregning import beregn, Inndata, Resultater, STAG_DB, BERGARTER, BERGKVALITET, PI
 
 st.set_page_config(
@@ -358,7 +359,6 @@ with tab_rapport:
 
     if generer:
         from rapport import generer_pdf
-        import datetime as _dt
         meta = dict(
             prosjekt=r_prosjekt or "–",
             docnr=r_docnr or "–",
@@ -397,5 +397,3 @@ with tab_rapport:
 - Oppsummeringstabell med utnyttelsesgrader
 - Referanseliste (V220, EC2/3/7, IPV A02, NGI)
 """)
-
-import datetime
