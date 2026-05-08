@@ -246,7 +246,7 @@ STAG_DB = [
     dict(key="m36",  navn="M36 S670/800",            kat="forspentstag_EC3del5", ds=36,  dh=51,  fyk=670, fuk=800, As=817,  Ag=1018, gs=1.05, tsm=2.4, src="NGI tab. 9"),
     dict(key="g32",  navn="GEWI Ø32 St670/800",      kat="forspentstag_EC3del5", ds=32,  dh=45,  fyk=670, fuk=800, As=693,  Ag=804,  gs=1.05, tsm=2.4, src="Leverandør"),
     dict(key="g40",  navn="GEWI Ø40 St670/800",      kat="forspentstag_EC3del5", ds=40,  dh=56,  fyk=670, fuk=800, As=1140, Ag=1257, gs=1.05, tsm=2.4, src="Leverandør"),
-    dict(key="ibo30",navn="IBO Ø30 R32 (selvborende)",kat="kamstaal_passiv",     ds=30,  dh=76,  fyk=550, fuk=630, As=452,  Ag=452,  gs=1.05, tsm=2.0, src="Leverandør"),
+    dict(key="ibo30",navn="IBO Ø30 R32 (selvborende)",kat="kamstaal_passiv",     ds=30,  dh=76,  fyk=550, fuk=630, As=452,  Ag=452,  gs=1.15, tsm=2.0, src="Leverandør"),
     dict(key="l3p",  navn="Lissestag 3×0.6\" perm.", kat="lissestag",            ds=15.24,dh=90, fyk=1670,fuk=1860,As=420, Ag=420,  gs=1.10, tsm=2.4, src="EC2 vedl. C", n=3, mont="perm"),
     dict(key="l7p",  navn="Lissestag 7×0.6\" perm.", kat="lissestag",            ds=15.24,dh=115,fyk=1670,fuk=1860,As=980, Ag=980,  gs=1.10, tsm=2.4, src="EC2 vedl. C", n=7, mont="perm"),
     dict(key="l3m",  navn="Lissestag 3×0.6\" midle.",kat="lissestag",            ds=15.24,dh=90, fyk=1670,fuk=1860,As=420, Ag=420,  gs=1.10, tsm=2.4, src="EC2 vedl. C", n=3, mont="mid"),
