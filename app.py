@@ -87,63 +87,57 @@ with st.sidebar:
     else:
         Pt01k, Ptk = 0.0, 0.0
 
-# ── Bergdata og mørteldata ────────────────────────────────────────────────────
-tab_kalk, tab_metode, tab_mat, tab_rapport = st.tabs(["📐 Kalkulator", "📖 Metode og formler", "📋 Materialdata", "📄 Rapport / PDF"])
+# ── Global beregning (tilgjengelig i alle faner) ──────────────────────────────
+# Bergdata og mørteldata samles her slik at inn og r er globale variabler
+    st.divider()
+    st.markdown("### 🪨 Bergdata – uttrekk")
+    st.markdown("""<div style='background:#fff8ee;border:1px solid #f0c060;border-radius:8px;
+        padding:8px 12px;font-size:12px;color:#7a4010;margin-bottom:10px'>
+        <b>τ_k bruddplan (kPa)</b> – velges etter oppsprekkingsgrad (V220 tab. 11.6.4.5-2).
+        Ikke heftfasthet mørtel/berg.</div>""", unsafe_allow_html=True)
+    bergkval = st.radio("Bergkvalitet", list(BERGKVALITET.keys()), index=0)
+    bk = BERGKVALITET[bergkval]
+    tauBerg = st.number_input("τ_k bruddplan (kPa)", value=float(bk["tauK"]), min_value=10.0, max_value=300.0, step=10.0)
+    psi_max = bk["psi_maks"]
+    psi = st.slider(f"ψ – bruddvinkel (°, maks {psi_max}°)", 10, 60, psi_max)
+    if psi > psi_max:
+        st.warning(f"ψ = {psi}° overskrider anbefalt maks {psi_max}°")
+    gammaM_berg = st.number_input("γ_M,berg (anbef. 2–3)", value=3.0, min_value=1.0, max_value=5.0, step=0.5)
+
+    st.divider()
+    st.markdown("### 🔩 Mørteldata")
+    bergart = st.selectbox("Bergart", list(BERGARTER.keys()), index=2)
+    tauMB = st.number_input("τ_k mørtel/berg (MPa)", value=BERGARTER[bergart]["tauMB"], step=0.1)
+    bruk_EC2 = st.toggle("Heft stål/mørtel etter EC2", value=False)
+    if bruk_EC2:
+        fc_cube = st.number_input("f_c,cube mørtel (MPa)", value=50.0, step=5.0)
+        eta1    = st.number_input("η₁ – borehullfaktor", value=0.7, min_value=0.3, max_value=1.0, step=0.05)
+        tauSM   = 0.0
+    else:
+        fc_cube, eta1 = 50.0, 0.7
+        tauSM = st.number_input("τ_k stål/mørtel (MPa)", value=float(st_data["tsm"]), step=0.1)
+    gammaM_mortel = st.number_input("γ_m,mørtel", value=1.25, min_value=1.0, max_value=2.0, step=0.05)
+
+# ── Global beregning – tilgjengelig i ALLE faner ──────────────────────────────
+inn = Inndata(
+    stagkategori=kat, stagname=st_data["navn"], stagsrc=st_data["src"],
+    ds_mm=ds_mm, dh_mm=dh_mm, alpha_deg=float(alpha),
+    Fk_kN=Fk, gammaF=gammaF, eta_proeve=eta_p,
+    fyk_MPa=fyk, fuk_MPa=fuk, As_mm2=As, Ag_mm2=Ag,
+    gammaS=gammaS, gammaM0=gamM0, gammaM2=gamM2, kt=kt, fa=fa,
+    Pt01k_kN=Pt01k, Ptk_kN=Ptk,
+    n_lisser=int(n_lisser), lisse_montering=lisse_mont,
+    tauK_berg_kPa=tauBerg, psi_deg=float(psi), gammaM_berg=gammaM_berg,
+    tauK_sm_MPa=tauSM, tauK_mb_MPa=tauMB, gammaM_mortel=gammaM_mortel,
+    bruk_EC2_heft=bruk_EC2, fc_cube_MPa=fc_cube if bruk_EC2 else 50.0, eta1=eta1,
+)
+r = beregn(inn)
+
+# ── Tabs ──────────────────────────────────────────────────────────────────────
+tab_kalk, tab_metode, tab_mat, tab_rapport = st.tabs(
+    ["📐 Kalkulator", "📖 Metode og formler", "📋 Materialdata", "📄 Rapport / PDF"])
 
 with tab_kalk:
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("### 🪨 Bergdata – uttrekk")
-        st.markdown("""<div class="warn-box">
-        <b>τ_k bruddplan (kPa)</b> – skjærmotstand langs bruddkjeglens overflate.
-        Velges etter oppsprekkingsgrad (V220 tab. 11.6.4.5-2). <b>Ikke</b> heftfasthet mørtel/berg.
-        </div>""", unsafe_allow_html=True)
-
-        bergkval = st.radio("Bergkvalitet", list(BERGKVALITET.keys()), index=0)
-        bk = BERGKVALITET[bergkval]
-        tauBerg = st.number_input("τ_k bruddplan (kPa)", value=float(bk["tauK"]), min_value=10.0, max_value=300.0, step=10.0)
-        psi_max = bk["psi_maks"]
-        psi = st.slider(f"ψ – bruddvinkel (°, maks {psi_max}° for valgt kvalitet)", 10, 60, psi_max)
-        if psi > psi_max:
-            st.warning(f"ψ = {psi}° overskrider anbefalt maks {psi_max}° for valgt bergkvalitet (V220 tab. 11.6.4.5-2)")
-        gammaM_berg = st.number_input("γ_M,berg (anbef. 2–3)", value=3.0, min_value=1.0, max_value=5.0, step=0.5)
-
-    with col2:
-        st.markdown("### 🔩 Mørteldata – inngysingslengde")
-        st.markdown("""<div class="info-box">
-        <b>τ_k mørtel/berg (MPa)</b> – heftfasthet i borehullsvegg etter bergart (V220 tab. 11.6.4.5-1).
-        Separat fra τ_k bruddplan.
-        </div>""", unsafe_allow_html=True)
-
-        bergart = st.selectbox("Bergart", list(BERGARTER.keys()), index=2)
-        tauMB = st.number_input("τ_k mørtel/berg (MPa)", value=BERGARTER[bergart]["tauMB"], step=0.1)
-
-        st.markdown("**Heftfasthet stål/mørtel**")
-        bruk_EC2 = st.toggle("Beregn heft stål/mørtel etter EC2 (IPV kap. 2.3.2.2)", value=False)
-        if bruk_EC2:
-            fc_cube = st.number_input("Terningfasthet mørtel f_c,cube (MPa)", value=50.0, step=5.0)
-            eta1    = st.number_input("η₁ – borehullfaktor (anbef. 0,7)", value=0.7, min_value=0.3, max_value=1.0, step=0.05)
-            tauSM   = 0.0
-        else:
-            fc_cube, eta1 = 50.0, 0.7
-            tauSM = st.number_input("τ_k stål/mørtel (MPa)", value=float(st_data["tsm"]), step=0.1)
-        gammaM_mortel = st.number_input("γ_m,mørtel", value=1.25, min_value=1.0, max_value=2.0, step=0.05)
-
-    # ── Beregning ─────────────────────────────────────────────────────────────
-    inn = Inndata(
-        stagkategori=kat, stagname=st_data["navn"], stagsrc=st_data["src"],
-        ds_mm=ds_mm, dh_mm=dh_mm, alpha_deg=float(alpha),
-        Fk_kN=Fk, gammaF=gammaF, eta_proeve=eta_p,
-        fyk_MPa=fyk, fuk_MPa=fuk, As_mm2=As, Ag_mm2=Ag,
-        gammaS=gammaS, gammaM0=gamM0, gammaM2=gamM2, kt=kt, fa=fa,
-        Pt01k_kN=Pt01k, Ptk_kN=Ptk,
-        n_lisser=int(n_lisser), lisse_montering=lisse_mont,
-        tauK_berg_kPa=tauBerg, psi_deg=float(psi), gammaM_berg=gammaM_berg,
-        tauK_sm_MPa=tauSM, tauK_mb_MPa=tauMB, gammaM_mortel=gammaM_mortel,
-        bruk_EC2_heft=bruk_EC2, fc_cube_MPa=fc_cube if bruk_EC2 else 50.0, eta1=eta1,
-    )
-    r = beregn(inn)
 
     # ── Nøkkeltall ────────────────────────────────────────────────────────────
     st.divider()
