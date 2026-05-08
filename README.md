@@ -1,27 +1,35 @@
-Bergforankring – beregningsverktøy
-Filer
-`beregning.py` – beregningsmotor (all formellogikk)
-`app.py`       – Streamlit-grensesnitt
-`gen_rapport_from_json.py` – PDF-generator (ligger i Claude-prosjektet)
-Kom i gang
-Krav
-```
+# Bergforankring – beregningsverktøy v2
+
+## Filer
+- `beregning.py` – beregningsmotor (all formellogikk, deles av app og PDF)
+- `rapport.py`   – PDF-rapportgenerator med fin typografi (ReportLab)
+- `app.py`       – Streamlit-grensesnitt med fire faner
+- `requirements.txt` – Python-avhengigheter
+
+## Kom i gang lokalt
+```bash
 pip install streamlit pandas reportlab
-```
-Start kalkulatoren
-```
 streamlit run app.py
 ```
-Åpnes automatisk på http://localhost:8501
-Endringer fra HTML-versjon (IPV-INGGEO-002 A02, 2025-09-18)
-Indre kapasitet stangstag bruker nå EC3 del 5 (F_tt,Rd og F_tg,Rd separat)
-L1 kamstålbolter dimensjoneres med flytelast, ikke P_d = γF·Fk
-η2-korreksjon for ø > 32 mm ved EC2-beregning av heftfasthet
-Prøvelastbegrensning kontrolleres for lissestag (Pp ≤ 0,80·Ptk)
-Reduksjonsfaktor f_a (EC7 NA.A.19) er implementert
-Referanser
-SVV håndbok V220 (2023) kap. 11.6.4.5
-NS-EN 1992-1-1, 1993-1-1, 1997-1
-IPV-INGGEO-002 Bergforankring A02 (Norconsult 2025-09-18)
-NGI rapport 20210114-01-R (2021)
-NS 3576-3:2012
+Åpnes på http://localhost:8501
+
+## Deploy på Streamlit Community Cloud
+1. Push alle filer til GitHub-repo
+2. Gå til share.streamlit.io → "New app"
+3. Velg repo, branch=main, fil=app.py → Deploy
+
+## Faner i appen
+- **Kalkulator** – beregning med live resultater og formelvisning
+- **Rapport / PDF** – fyll inn prosjektinfo og last ned PDF direkte
+- **Metode og formler** – formelreferanser og tabeller
+- **Materialdata** – oversikt over alle stagtyper med R_itd
+
+## Faglig grunnlag (IPV-INGGEO-002 A02, 2025-09-18)
+- Forspentstag: EC3 del 5 (F_tt,Rd og F_tg,Rd separat)
+- Kamstålbolter: L1 dimensjoneres med flytelast (IPV kap. 4.2)
+- η2-korreksjon for ø > 32 mm (EC2 / IPV kap. 2.3.2.2)
+- Prøvelastbegrensning Pp ≤ 0,80·Ptk (IPV kap. 2.3.1.1)
+- Reduksjonsfaktor f_a (EC7 NA.A.19)
+
+## Referanser
+SVV V220 (2023) · EC2/EC3/EC7 · IPV-INGGEO-002 A02 · NGI 20210114-01-R · NS 3576-3:2012
